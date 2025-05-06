@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.Random;
 
 /**
@@ -57,6 +58,301 @@ interface ActivationFunction {
 }
 
 /**
+ * Collection of activation functions for neural networks
+ */
+class ActivationFunctions {
+    /**
+     * Sigmoid activation function
+     * 
+     * Characteristics:
+     * - Smooth, continuous function
+     * - Output range: (0,1)
+     * - Commonly used in binary classification
+     * - Can cause vanishing gradient problems
+     * 
+     * @param x Input value
+     * @return Output in range (0,1)
+     */
+    public static float sigmoid(float x) {
+        return 1.0f / (1.0f + (float)Math.exp(-x));
+    }
+    
+    /**
+     * Derivative of the sigmoid function
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float sigmoidDerivative(float x) {
+        float s = sigmoid(x);
+        return s * (1 - s);
+    }
+    
+    /**
+     * Hyperbolic tangent activation function
+     * 
+     * Characteristics:
+     * - Zero-centered output
+     * - Output range: (-1,1)
+     * - Stronger gradients than sigmoid
+     * - Still can have vanishing gradient issues
+     * 
+     * @param x Input value
+     * @return Output in range (-1,1)
+     */
+    public static float tanh(float x) {
+        return (float)Math.tanh(x);
+    }
+    
+    /**
+     * Derivative of the hyperbolic tangent function
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float tanhDerivative(float x) {
+        float t = tanh(x);
+        return 1 - t * t;
+    }
+    
+    /**
+     * Rectified Linear Unit (ReLU) activation function
+     * 
+     * Characteristics:
+     * - Simple and computationally efficient
+     * - No vanishing gradient for positive values
+     * - Can cause "dying ReLU" problem
+     * - Most commonly used activation in modern networks
+     * 
+     * @param x Input value
+     * @return max(0,x)
+     */
+    public static float relu(float x) {
+        return x > 0.0f ? x : 0.0f;
+    }
+    
+    /**
+     * Derivative of the ReLU function
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float reluDerivative(float x) {
+        return x > 0.0f ? 1.0f : 0.0f;
+    }
+    
+    /**
+     * Leaky ReLU activation function
+     * 
+     * Characteristics:
+     * - Prevents dying ReLU problem
+     * - Small gradient for negative values
+     * - No vanishing gradient
+     * 
+     * @param x Input value
+     * @param alpha Slope for negative values (typically small, e.g., 0.01)
+     * @return x if x > 0, alpha * x otherwise
+     */
+    public static float lrelu(float x, float alpha) {
+        return x > 0.0f ? x : alpha * x;
+    }
+    
+    /**
+     * Leaky ReLU with default alpha value
+     * 
+     * @param x Input value
+     * @return x if x > 0, 0.01 * x otherwise
+     */
+    public static float lrelu(float x) {
+        return lrelu(x, 0.01f);
+    }
+    
+    /**
+     * Derivative of the Leaky ReLU function
+     * 
+     * @param x Input value
+     * @param alpha Slope for negative values
+     * @return Derivative value for backpropagation
+     */
+    public static float lreluDerivative(float x, float alpha) {
+        return x > 0.0f ? 1.0f : alpha;
+    }
+    
+    /**
+     * Derivative of the Leaky ReLU with default alpha
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float lreluDerivative(float x) {
+        return lreluDerivative(x, 0.01f);
+    }
+    
+    /**
+     * Parametric ReLU activation function
+     * 
+     * Characteristics:
+     * - Similar to Leaky ReLU but with learnable alpha
+     * - More flexible than standard ReLU
+     * - Requires additional parameter training
+     * 
+     * @param x Input value
+     * @param alpha Learnable parameter for negative values
+     * @return x if x > 0, alpha * x otherwise
+     */
+    public static float prelu(float x, float alpha) {
+        return x > 0.0f ? x : alpha * x;
+    }
+    
+    /**
+     * Derivative of the Parametric ReLU function
+     * 
+     * @param x Input value
+     * @param alpha Learnable parameter for negative values
+     * @return Derivative value for backpropagation
+     */
+    public static float preluDerivative(float x, float alpha) {
+        return x > 0.0f ? 1.0f : alpha;
+    }
+    
+    /**
+     * Exponential Linear Unit activation function
+     * 
+     * Characteristics:
+     * - Smooth function including at x=0
+     * - Can produce negative values
+     * - Better handling of noise
+     * - Self-regularizing
+     * 
+     * @param x Input value
+     * @param alpha Scale for the negative part
+     * @return x if x ≥ 0, alpha * (exp(x) - 1) otherwise
+     */
+    public static float elu(float x, float alpha) {
+        return x >= 0.0f ? x : alpha * ((float)Math.exp(x) - 1.0f);
+    }
+    
+    /**
+     * ELU with default alpha value
+     * 
+     * @param x Input value
+     * @return x if x ≥ 0, (exp(x) - 1) otherwise
+     */
+    public static float elu(float x) {
+        return elu(x, 1.0f);
+    }
+    
+    /**
+     * Derivative of the ELU function
+     * 
+     * @param x Input value
+     * @param alpha Scale parameter
+     * @return Derivative value for backpropagation
+     */
+    public static float eluDerivative(float x, float alpha) {
+        return x >= 0.0f ? 1.0f : alpha * (float)Math.exp(x);
+    }
+    
+    /**
+     * Derivative of the ELU with default alpha
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float eluDerivative(float x) {
+        return eluDerivative(x, 1.0f);
+    }
+    
+    /**
+     * Single-input softmax for network structure
+     * 
+     * Note: This is only part of the softmax calculation.
+     * Full normalization happens in the network forward pass.
+     * 
+     * @param x Input value
+     * @return Exponential of input (partial softmax)
+     */
+    public static float softmaxSingle(float x) {
+        return (float)Math.exp(x);
+    }
+    
+    /**
+     * Derivative of softmax function
+     * 
+     * @param x Input value
+     * @return Derivative value for backpropagation
+     */
+    public static float softmaxDerivative(float x) {
+        float s = softmaxSingle(x);
+        return s * (1 - s);
+    }
+    
+    /**
+     * Softmax activation function for entire layer
+     * 
+     * Characteristics:
+     * - Converts inputs to probability distribution
+     * - Outputs sum to 1.0
+     * - Commonly used in classification
+     * - Numerically stable implementation
+     * 
+     * @param input Array of input values
+     * @param output Array to store results
+     * @param size Length of input/output arrays
+     */
+    public static void softmax(float[] input, float[] output, int size) {
+        float maxVal = input[0];
+        for (int i = 1; i < size; i++) {
+            if (input[i] > maxVal) {
+                maxVal = input[i];
+            }
+        }
+        
+        float sum = 0.0f;
+        for (int i = 0; i < size; i++) {
+            output[i] = (float)Math.exp(input[i] - maxVal);
+            sum += output[i];
+        }
+        
+        for (int i = 0; i < size; i++) {
+            output[i] /= sum;
+        }
+    }
+    
+    /**
+     * Gaussian Error Linear Unit (GELU) activation
+     * 
+     * Characteristics:
+     * - Smooth approximation of ReLU
+     * - Used in modern transformers
+     * - Combines properties of dropout and ReLU
+     * - More computationally expensive
+     * 
+     * @param x Input value
+     * @return GELU activation value
+     */
+    public static float gelu(float x) {
+        double sqrt2OverPi = Math.sqrt(2 / Math.PI);
+        return (float)(0.5 * x * (1 + Math.tanh(sqrt2OverPi * (x + 0.044715 * Math.pow(x, 3)))));
+    }
+    
+    /**
+     * Approximate derivative of GELU function
+     * 
+     * @param x Input value
+     * @return Approximate derivative value for backpropagation
+     */
+    public static float geluDerivative(float x) {
+        double sqrt2OverPi = Math.sqrt(2 / Math.PI);
+        double term = sqrt2OverPi * (x + 0.044715 * Math.pow(x, 3));
+        double tanh = Math.tanh(term);
+        double sech2 = 1 - tanh * tanh; // sech^2 = 1 - tanh^2
+        double innerDerivative = sqrt2OverPi * (1 + 3 * 0.044715 * Math.pow(x, 2));
+        return (float)(0.5 * (1 + tanh + x * sech2 * innerDerivative));
+    }
+}
+
+/**
  * Represents the entire neural network structure
  */
 class Network {
@@ -65,6 +361,9 @@ class Network {
     
     /** Total number of layers in the network */
     private int size;
+    
+    /** Filename for storing/loading weights */
+    private static final String WEIGHTS_FILENAME = "weights.bin";
     
     /**
      * 3D array of network weights:
@@ -94,6 +393,13 @@ class Network {
                 this.weights[layer][inputNeuron] = new float[layers[layer + 1].getLength()];
             }
         }
+        
+        // Check if weights file exists, if it does - load weights
+        // If not - randomize and save
+        if (!loadWeights()) {
+            randomizeWeights();
+            saveWeights();
+        }
     }
     
     /**
@@ -117,6 +423,85 @@ class Network {
                     weights[layer][i][j] = r * scale;
                 }
             }
+        }
+    }
+    
+    /**
+     * Saves network weights to a file
+     * 
+     * @return true if save was successful, false otherwise
+     */
+    public boolean saveWeights() {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(WEIGHTS_FILENAME))) {
+            // Write network size
+            dos.writeInt(size);
+            
+            // For each layer, write dimensions
+            for (int layer = 0; layer < size - 1; layer++) {
+                dos.writeInt(layers[layer].getLength() + 1); // +1 for bias
+                dos.writeInt(layers[layer + 1].getLength());
+                
+                // Write weights for this layer
+                for (int i = 0; i < layers[layer].getLength() + 1; i++) {
+                    for (int j = 0; j < layers[layer + 1].getLength(); j++) {
+                        dos.writeFloat(weights[layer][i][j]);
+                    }
+                }
+            }
+            
+            System.out.println("Weights saved to " + WEIGHTS_FILENAME);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error saving weights: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Loads network weights from a file
+     * 
+     * @return true if load was successful, false otherwise
+     */
+    public boolean loadWeights() {
+        File file = new File(WEIGHTS_FILENAME);
+        if (!file.exists()) {
+            System.out.println("Weights file not found. Will randomize weights.");
+            return false;
+        }
+        
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(WEIGHTS_FILENAME))) {
+            // Read network size and verify
+            int savedSize = dis.readInt();
+            if (savedSize != size) {
+                System.err.println("Saved network size doesn't match current network.");
+                return false;
+            }
+            
+            // Read each layer
+            for (int layer = 0; layer < size - 1; layer++) {
+                int inputSize = dis.readInt();
+                int outputSize = dis.readInt();
+                
+                // Verify dimensions
+                if (inputSize != layers[layer].getLength() + 1 || 
+                    outputSize != layers[layer + 1].getLength()) {
+                    System.err.println("Saved layer dimensions don't match current network.");
+                    return false;
+                }
+                
+                // Read weights
+                for (int i = 0; i < layers[layer].getLength() + 1; i++) {
+                    for (int j = 0; j < layers[layer + 1].getLength(); j++) {
+                        weights[layer][i][j] = dis.readFloat();
+                    }
+                }
+            }
+            
+            System.out.println("Weights loaded from " + WEIGHTS_FILENAME);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error loading weights: " + e.getMessage());
+            return false;
         }
     }
     
@@ -203,7 +588,7 @@ class Network {
      */
     private float softmaxSingle(float input) {
         // This is a placeholder - the actual softmax is computed for the entire layer
-        return input;
+        return ActivationFunctions.softmaxSingle(input);
     }
     
     /**
@@ -214,15 +599,10 @@ class Network {
      */
     private boolean isSoftmaxActivation(ActivationFunction func) {
         // In Java we can't directly compare function references, so we'll use a specific method
-        // This could be implemented in several ways:
-        // 1. Using a named constant for the softmax function
-        // 2. Using an enum of activation functions
-        // 3. Using a special flag in the Layer class
-        
-        // For this example, we'll check if the function has the same identity as our softmax function
+        // For this example, we'll check if the function has the same behavior as our softmax function
         // by using a simple test value
         float testValue = 1.0f;
-        return Math.abs(func.apply(testValue) - softmaxSingle(testValue)) < 0.0001f;
+        return Math.abs(func.apply(testValue) - ActivationFunctions.softmaxSingle(testValue)) < 0.0001f;
     }
 }
 
@@ -231,20 +611,20 @@ class Network {
  */
 public class NeuralNetworkExample {
     public static void main(String[] args) {
-        // Example activation functions
-        ActivationFunction relu = x -> x > 0 ? x : 0;
-        ActivationFunction reluDerivative = x -> x > 0 ? 1 : 0;
-        
         // Create a simple network: 3 inputs -> 4 hidden -> 2 outputs
+        // Using different activation functions for each layer
         Layer[] layers = {
-            new Layer(3, relu, reluDerivative),
-            new Layer(4, relu, reluDerivative),
-            new Layer(2, relu, reluDerivative)
+            new Layer(3, ActivationFunctions::relu, ActivationFunctions::reluDerivative),
+            new Layer(4, ActivationFunctions::sigmoid, ActivationFunctions::sigmoidDerivative),
+            new Layer(2, ActivationFunctions::softmaxSingle, ActivationFunctions::softmaxDerivative)
         };
         
         // Initialize network
+        // This will automatically:
+        // 1. Check if weights.bin exists
+        // 2. If it exists - load weights from it
+        // 3. If not - randomize weights and save them to weights.bin
         Network network = new Network(layers);
-        network.randomizeWeights();
         
         // Example forward pass
         float[] input = {0.5f, 0.3f, 0.7f};
@@ -255,5 +635,20 @@ public class NeuralNetworkExample {
         for (float value : output) {
             System.out.println(value);
         }
+        
+        // Demonstrate other activation functions
+        System.out.println("\nActivation Function Examples:");
+        float testValue = -0.5f;
+        System.out.println("Input value: " + testValue);
+        System.out.println("Sigmoid: " + ActivationFunctions.sigmoid(testValue));
+        System.out.println("Tanh: " + ActivationFunctions.tanh(testValue));
+        System.out.println("ReLU: " + ActivationFunctions.relu(testValue));
+        System.out.println("Leaky ReLU: " + ActivationFunctions.lrelu(testValue));
+        System.out.println("ELU: " + ActivationFunctions.elu(testValue));
+        System.out.println("GELU: " + ActivationFunctions.gelu(testValue));
+        
+        // No need to save weights here since:
+        // 1. If weights.bin didn't exist, they were already saved in the constructor
+        // 2. If weights.bin did exist, we don't want to overwrite it
     }
 }
